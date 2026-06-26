@@ -1,0 +1,88 @@
+---
+title: "Dark Mode Without the Flash: A CSS Custom Properties Approach"
+description: "Implementing a flicker-free dark mode using CSS custom properties, localStorage, and a tiny inline script — no JavaScript framework required."
+publishDate: 2026-05-10
+author: jane-doe
+category: Tutorial
+tags: [dark-mode, css, javascript, ux]
+popularity: 82
+draft: false
+---
+
+If you've ever implemented dark mode with a `useEffect` or `onMounted` hook, you've probably seen the dreaded flash of unstyled content — the page loads light, then jumps to dark a millisecond later. Here's how to fix it permanently.
+
+## Why the Flash Happens
+
+React and Vue run JavaScript *after* the browser has already painted the page. By the time your client-side code reads `localStorage` and sets the theme class, the initial paint has already happened in light mode.
+
+## The Solution: Inline Blocking Script
+
+The fix is a tiny inline `<script>` in the `<head>` — not an external file, not deferred, not async. It runs *synchronously* before the first paint:
+
+```html
+<script>
+  const stored = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = stored ?? (prefersDark ? 'dark' : 'light');
+  document.documentElement.dataset.theme = theme;
+</script>
+```
+
+Because this script has no `defer` or `async` attribute, the browser pauses HTML parsing to execute it. By the time anything is painted, `data-theme` is already set on `<html>`.
+
+## CSS Custom Properties Architecture
+
+Instead of toggling class names, use CSS custom properties:
+
+```css
+:root {
+  --color-bg: #ffffff;
+  --color-text: #111827;
+  --color-accent: #6366f1;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-text: #f1f5f9;
+  --color-accent: #818cf8;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+```
+
+The advantage over class-based approaches: you get smooth transitions for free by adding `transition: color 0.2s, background-color 0.2s` to the body.
+
+## The Toggle Button
+
+```javascript
+const btn = document.querySelector('[data-theme-toggle]');
+
+btn.addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('theme', next);
+});
+```
+
+## Respecting System Preferences
+
+Notice the `??` operator in the initial script — it only falls back to `prefers-color-scheme` if nothing is stored. This way:
+
+1. First visit: uses OS preference
+2. Subsequent visits: uses saved preference
+3. Toggle: overrides OS preference
+
+This matches user expectations perfectly.
+
+## With Tailwind CSS v4
+
+Tailwind v4's `@variant` directive makes this even cleaner:
+
+```css
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+```
+
+Now `dark:bg-slate-900` and similar utilities respond to `data-theme="dark"` on any ancestor — exactly what you want.

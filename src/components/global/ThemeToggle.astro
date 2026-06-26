@@ -1,0 +1,51 @@
+---
+---
+
+<button
+  data-theme-toggle
+  aria-label="Toggle dark mode"
+  class="p-2 rounded-lg transition-colors hover:opacity-80"
+  style="color: var(--color-text-secondary); background: var(--color-surface);"
+>
+  <!-- Sun icon (shown in dark mode) -->
+  <svg data-icon="sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+  </svg>
+  <!-- Moon icon (shown in light mode) -->
+  <svg data-icon="moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+  </svg>
+</button>
+
+<script>
+  function initThemeToggle() {
+    const btn = document.querySelector('[data-theme-toggle]');
+    if (!btn) return;
+
+    function updateIcons(theme: string) {
+      const sun = btn!.querySelector('[data-icon="sun"]') as HTMLElement;
+      const moon = btn!.querySelector('[data-icon="moon"]') as HTMLElement;
+      if (theme === 'dark') {
+        sun.classList.remove('hidden');
+        moon.classList.add('hidden');
+      } else {
+        sun.classList.add('hidden');
+        moon.classList.remove('hidden');
+      }
+    }
+
+    const current = document.documentElement.dataset.theme ?? 'light';
+    updateIcons(current);
+
+    btn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+      updateIcons(next);
+    });
+  }
+
+  initThemeToggle();
+  document.addEventListener('astro:after-swap', initThemeToggle);
+</script>

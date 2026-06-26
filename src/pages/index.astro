@@ -1,11 +1,46 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import PageLayout from '../layouts/PageLayout.astro';
+import FeaturedPost from '../components/home/FeaturedPost.astro';
+import PopularArticles from '../components/home/PopularArticles.astro';
+import LatestArticles from '../components/home/LatestArticles.astro';
+import SearchBox from '../components/search/SearchBox.astro';
+import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
+import { sortByDate, sortByPopularity } from '../utils/sort-posts';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+type BlogPost = CollectionEntry<'blog'>;
+
+const allPosts = await getCollection('blog', ({ data }: BlogPost) => !data.draft);
+
+const featuredPost = sortByDate(allPosts).find((p: BlogPost) => p.data.featured) ?? sortByDate(allPosts)[0];
+const featuredAuthor = await getEntry('authors', featuredPost.data.author.id);
+
+const popular = sortByPopularity(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
+const latest = sortByDate(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<PageLayout title="DevBlog — Web Development Articles" description="Articles about web development, modern tooling, CSS, TypeScript, and the open web.">
+
+  <!-- Site hero / search -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 text-center">
+    <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight" style="color: var(--color-text-primary);">
+      Insights for the<br class="hidden sm:block" />
+      <span style="color: var(--color-accent);"> modern web</span>
+    </h1>
+    <p class="mt-4 text-lg max-w-xl mx-auto" style="color: var(--color-text-secondary);">
+      Tutorials, guides, and opinions on web development, CSS, TypeScript, and the open web.
+    </p>
+    <div class="mt-8 max-w-xl mx-auto">
+      <SearchBox instanceId="home" placeholder="Search articles, tags, categories..." />
+    </div>
+  </div>
+
+  <!-- Featured -->
+  <FeaturedPost post={featuredPost} author={featuredAuthor!} />
+
+  <!-- Popular articles -->
+  <PopularArticles posts={popular} />
+
+  <!-- Latest articles -->
+  <LatestArticles posts={latest} />
+
+</PageLayout>

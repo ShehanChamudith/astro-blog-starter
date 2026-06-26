@@ -1,0 +1,72 @@
+---
+import { slugify } from '../../utils/slugify';
+
+interface Props {
+  category: string;
+  link?: boolean;
+  size?: 'sm' | 'md';
+}
+
+const { category, link = true, size = 'md' } = Astro.props;
+
+const colorMap: Record<string, string> = {
+  Tutorial: 'background: #dbeafe; color: #1e40af;',
+  Opinion: 'background: #fce7f3; color: #9d174d;',
+  News: 'background: #d1fae5; color: #065f46;',
+  'Case Study': 'background: #fef3c7; color: #92400e;',
+  Guide: 'background: #ede9fe; color: #5b21b6;',
+  Reference: 'background: #ffedd5; color: #9a3412;',
+};
+
+const darkColorMap: Record<string, string> = {
+  Tutorial: 'background: #1e3a5f; color: #93c5fd;',
+  Opinion: 'background: #4a1030; color: #f9a8d4;',
+  News: 'background: #064e3b; color: #6ee7b7;',
+  'Case Study': 'background: #451a03; color: #fcd34d;',
+  Guide: 'background: #2e1065; color: #c4b5fd;',
+  Reference: 'background: #431407; color: #fed7aa;',
+};
+
+const lightStyle = colorMap[category] ?? 'background: #f1f5f9; color: #475569;';
+const darkStyle = darkColorMap[category] ?? 'background: #1e293b; color: #94a3b8;';
+const sizeClass = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-xs px-2.5 py-1';
+---
+
+{link ? (
+  <a
+    href={`/category/${slugify(category)}`}
+    class={`inline-block rounded-full font-medium transition-opacity hover:opacity-80 ${sizeClass}`}
+    style={lightStyle}
+    data-dark-style={darkStyle}
+    data-light-style={lightStyle}
+  >
+    {category}
+  </a>
+) : (
+  <span
+    class={`inline-block rounded-full font-medium ${sizeClass}`}
+    style={lightStyle}
+    data-dark-style={darkStyle}
+    data-light-style={lightStyle}
+  >
+    {category}
+  </span>
+)}
+
+<script>
+  function updateBadgeTheme() {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    document.querySelectorAll('[data-dark-style]').forEach((el) => {
+      const badge = el as HTMLElement;
+      badge.style.cssText = isDark
+        ? badge.dataset.darkStyle ?? ''
+        : badge.dataset.lightStyle ?? '';
+    });
+  }
+
+  updateBadgeTheme();
+
+  const observer = new MutationObserver(updateBadgeTheme);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  document.addEventListener('astro:after-swap', updateBadgeTheme);
+</script>

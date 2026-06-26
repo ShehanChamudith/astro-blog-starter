@@ -1,0 +1,62 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { sortByDate } from '../../utils/sort-posts';
+import { slugify } from '../../utils/slugify';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog', ({ data }: CollectionEntry<'blog'>) => !data.draft);
+
+  const tagMap = new Map<string, CollectionEntry<'blog'>[]>();
+  for (const post of allPosts) {
+    for (const tag of post.data.tags) {
+      const slug = slugify(tag);
+      if (!tagMap.has(slug)) tagMap.set(slug, []);
+      tagMap.get(slug)!.push(post);
+    }
+  }
+
+  return [...tagMap.entries()].map(([tagSlug, posts]) => ({
+    params: { tag: tagSlug },
+    props: {
+      tag: posts[0].data.tags.find((t) => slugify(t) === tagSlug) ?? tagSlug,
+      posts: sortByDate(posts),
+    },
+  }));
+}
+
+interface Props {
+  tag: string;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<PageLayout title={`#${tag} Articles`} description={`Browse all articles tagged with ${tag}.`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <a href="/tags" class="text-sm font-medium flex items-center gap-1 mb-4 hover:opacity-70 transition-opacity" style="color: var(--color-text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        All tags
+      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">#</span>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color: var(--color-accent);">Tag</p>
+          <h1 class="text-3xl sm:text-4xl font-bold" style="color: var(--color-text-primary);">{tag}</h1>
+        </div>
+      </div>
+      <p class="mt-3 text-lg" style="color: var(--color-text-secondary);">
+        {posts.length} article{posts.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </div>
+</PageLayout>

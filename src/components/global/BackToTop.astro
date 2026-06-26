@@ -1,0 +1,46 @@
+---
+---
+
+<!-- Sentinel element placed at top of page -->
+<div id="back-to-top-sentinel" class="absolute top-0 left-0 w-px h-px" aria-hidden="true"></div>
+
+<button
+  id="back-to-top"
+  aria-label="Back to top"
+  class="fixed bottom-8 right-8 z-40 p-3 rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300 translate-y-4"
+  style="background: var(--color-accent); color: white;"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m18 15-6-6-6 6"/>
+  </svg>
+</button>
+
+<script>
+  function initBackToTop() {
+    const btn = document.getElementById('back-to-top');
+    const sentinel = document.getElementById('back-to-top-sentinel');
+    if (!btn || !sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          btn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+          btn.classList.add('opacity-100', 'translate-y-0');
+        } else {
+          btn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+          btn.classList.remove('opacity-100', 'translate-y-0');
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+
+    btn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  initBackToTop();
+  document.addEventListener('astro:after-swap', initBackToTop);
+</script>

@@ -1,0 +1,111 @@
+---
+import CategoryBadge from '../blog/CategoryBadge.astro';
+import TagList from '../blog/TagList.astro';
+import type { CollectionEntry } from 'astro:content';
+import { readingTime } from '../../utils/reading-time';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  author: CollectionEntry<'authors'>;
+}
+
+const { post, author } = Astro.props;
+const { title, description, publishDate, category, tags, coverImage, coverImageAlt } = post.data;
+
+const minutes = readingTime(post.body ?? '');
+const formattedDate = publishDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const initials = author.data.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+---
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-accent);">Featured Article</h2>
+  </div>
+
+  <article
+    class="group relative rounded-3xl overflow-hidden grid lg:grid-cols-2 gap-0 border shadow-lg"
+    style="border-color: var(--color-border); background: var(--color-surface); --tw-shadow: var(--shadow-lg);"
+  >
+    <!-- Image -->
+    <a href={`/blog/${post.id}`} class="block relative overflow-hidden aspect-video lg:aspect-auto min-h-64 lg:min-h-80">
+      {coverImage ? (
+        <img
+          src={coverImage.src}
+          alt={coverImageAlt ?? title}
+          width={coverImage.width}
+          height={coverImage.height}
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          fetchpriority="high"
+          loading="eager"
+        />
+      ) : (
+        <div
+          class="absolute inset-0 flex items-center justify-center"
+          style="background: linear-gradient(135deg, var(--color-accent-subtle), var(--color-surface-hover));"
+        >
+          <span class="text-8xl opacity-20">✍️</span>
+        </div>
+      )}
+      <!-- Gradient overlay -->
+      <div class="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent lg:block hidden"></div>
+    </a>
+
+    <!-- Content -->
+    <div class="flex flex-col justify-center p-7 sm:p-10">
+      <div class="flex items-center gap-3 flex-wrap">
+        <CategoryBadge category={category} />
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background: var(--color-accent); color: white;">
+          Featured
+        </span>
+      </div>
+
+      <a href={`/blog/${post.id}`} class="mt-4 block">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight transition-opacity group-hover:opacity-80" style="color: var(--color-text-primary);">
+          {title}
+        </h1>
+      </a>
+
+      <p class="mt-4 text-base sm:text-lg leading-relaxed" style="color: var(--color-text-secondary);">
+        {description}
+      </p>
+
+      <div class="mt-6 flex items-center gap-3">
+        <div
+          class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+          style="background: var(--color-accent);"
+          aria-hidden="true"
+        >
+          {initials}
+        </div>
+        <div>
+          <p class="text-sm font-semibold" style="color: var(--color-text-primary);">{author.data.name}</p>
+          <p class="text-xs" style="color: var(--color-text-muted);">
+            <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+            &nbsp;&middot;&nbsp;{minutes} min read
+          </p>
+        </div>
+      </div>
+
+      {tags.length > 0 && (
+        <div class="mt-5">
+          <TagList tags={tags} max={4} />
+        </div>
+      )}
+
+      <a
+        href={`/blog/${post.id}`}
+        class="mt-7 inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
+        style="color: var(--color-accent);"
+      >
+        Read article
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </a>
+    </div>
+  </article>
+</section>

@@ -1,0 +1,344 @@
+---
+interface Props {
+  instanceId?: string;
+  placeholder?: string;
+  compact?: boolean;
+}
+
+const { instanceId = 'default', placeholder = 'Search articles...', compact = false } = Astro.props;
+---
+
+<style>
+  @keyframes dropdown-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .search-dropdown-open {
+    animation: dropdown-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Styled scrollbar for the results list */
+  [data-search-results]::-webkit-scrollbar {
+    width: 4px;
+  }
+  [data-search-results]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  [data-search-results]::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 99px;
+  }
+
+  /* Input focus ring using accent colour */
+  [data-search-input]:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+</style>
+
+<div class="w-full relative" data-search-box={instanceId}>
+  <!-- Input -->
+  <div class="relative">
+    <!-- Search icon -->
+    <svg
+      data-search-icon
+      class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-150"
+      style="color: var(--color-text-muted);"
+      xmlns="http://www.w3.org/2000/svg"
+      width="18" height="18"
+      viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.3-4.3"/>
+    </svg>
+
+    <input
+      type="search"
+      data-search-input
+      placeholder={placeholder}
+      autocomplete="off"
+      spellcheck="false"
+      class={`w-full pl-11 pr-10 rounded-xl border outline-none transition-all duration-150 ${compact ? 'py-2.5 text-sm' : 'py-3.5 text-base'}`}
+      style="background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary);"
+    />
+
+    <!-- Clear button — only visible when input has value -->
+    <button
+      data-search-clear
+      type="button"
+      aria-label="Clear search"
+      class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-0 pointer-events-none transition-all duration-150 hover:opacity-70"
+      style="color: var(--color-text-muted);"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Dropdown panel -->
+  <div
+    data-search-dropdown
+    class="absolute left-0 right-0 top-full mt-2 rounded-2xl border z-50 overflow-hidden origin-top"
+    style="
+      background: var(--color-bg);
+      border-color: var(--color-border);
+      box-shadow: 0 20px 40px -8px rgb(0 0 0 / 0.18), 0 8px 16px -4px rgb(0 0 0 / 0.1), 0 0 0 1px color-mix(in srgb, var(--color-accent) 10%, transparent);
+      display: none;
+    "
+  >
+    <!-- Header bar -->
+    <div
+      class="flex items-center justify-between px-4 py-2.5 border-b"
+      style="border-color: var(--color-border); background: var(--color-surface);"
+    >
+      <p data-search-status class="text-xs font-medium" style="color: var(--color-text-muted);"></p>
+      <kbd class="hidden sm:inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded font-mono"
+        style="background: var(--color-surface-hover); color: var(--color-text-muted); border: 1px solid var(--color-border);">
+        esc
+      </kbd>
+    </div>
+
+    <!-- Results list -->
+    <ul
+      data-search-results
+      class="max-h-72 overflow-y-auto py-2"
+      role="listbox"
+    ></ul>
+
+    <!-- Footer hint -->
+    <div
+      class="px-4 py-2 border-t flex items-center gap-3"
+      style="border-color: var(--color-border); background: var(--color-surface);"
+    >
+      <span class="flex items-center gap-1 text-xs" style="color: var(--color-text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        navigate
+      </span>
+      <span class="flex items-center gap-1 text-xs" style="color: var(--color-text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+        select
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  interface SearchItem {
+    slug: string;
+    title: string;
+    description: string;
+    tags: string[];
+    category: string;
+  }
+
+  let fuse: Fuse<SearchItem> | null = null;
+  let initialized = false;
+
+  async function initSearch() {
+    try {
+      const res = await fetch('/search-index.json');
+      const data: SearchItem[] = await res.json();
+      fuse = new Fuse(data, {
+        keys: [
+          { name: 'title', weight: 3 },
+          { name: 'description', weight: 2 },
+          { name: 'tags', weight: 1 },
+          { name: 'category', weight: 1 },
+        ],
+        threshold: 0.35,
+      });
+      initialized = true;
+    } catch (e) {
+      console.error('Failed to load search index', e);
+    }
+  }
+
+  function showDropdown(dropdown: HTMLElement) {
+    dropdown.style.display = 'block';
+    // Force reflow so the animation re-triggers every open
+    dropdown.classList.remove('search-dropdown-open');
+    void dropdown.offsetHeight;
+    dropdown.classList.add('search-dropdown-open');
+  }
+
+  function hideDropdown(dropdown: HTMLElement) {
+    dropdown.style.display = 'none';
+    dropdown.classList.remove('search-dropdown-open');
+  }
+
+  function renderResults(box: Element, results: SearchItem[], query: string) {
+    const list = box.querySelector('[data-search-results]') as HTMLElement;
+    const status = box.querySelector('[data-search-status]') as HTMLElement;
+    const dropdown = box.querySelector('[data-search-dropdown]') as HTMLElement;
+    const icon = box.querySelector('[data-search-icon]') as HTMLElement;
+    if (!list || !status || !dropdown) return;
+
+    if (!query.trim()) {
+      hideDropdown(dropdown);
+      list.innerHTML = '';
+      status.textContent = '';
+      if (icon) icon.style.color = 'var(--color-text-muted)';
+      return;
+    }
+
+    // Tint the icon accent while active
+    if (icon) icon.style.color = 'var(--color-accent)';
+    showDropdown(dropdown);
+
+    if (results.length === 0) {
+      status.textContent = '';
+      list.innerHTML = `
+        <li class="flex flex-col items-center gap-2 py-8 px-4 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-text-muted); opacity: 0.5;">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <span class="text-sm font-medium" style="color: var(--color-text-secondary);">No results for "<strong>${query}</strong>"</span>
+          <span class="text-xs" style="color: var(--color-text-muted);">Try different keywords or check your spelling</span>
+        </li>`;
+      return;
+    }
+
+    status.textContent = `${results.length} result${results.length !== 1 ? 's' : ''}`;
+
+    list.innerHTML = results.map((item, i) => `
+      <li role="option">
+        <a
+          href="/blog/${item.slug}"
+          data-result-index="${i}"
+          class="group flex items-start gap-3 mx-2 px-3 py-3 rounded-xl transition-all duration-100"
+          style="color: inherit;"
+        >
+          <div
+            class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 text-xs font-bold text-white transition-transform duration-100 group-hover:scale-110"
+            style="background: var(--color-accent); opacity: 0.85;"
+          >${item.category.slice(0, 1)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold mb-0.5" style="color: var(--color-accent);">${item.category}</div>
+            <div class="text-sm font-semibold leading-snug" style="color: var(--color-text-primary);">${item.title}</div>
+            <div class="text-xs mt-0.5 truncate" style="color: var(--color-text-muted);">${item.description}</div>
+          </div>
+          <svg class="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-100" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent);">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </a>
+      </li>
+    `).join('');
+
+    // Hover highlight via JS (avoids needing Tailwind purge for dynamic classes)
+    list.querySelectorAll('[data-result-index]').forEach((el) => {
+      const a = el as HTMLElement;
+      a.addEventListener('mouseenter', () => {
+        a.style.background = 'var(--color-surface-hover)';
+      });
+      a.addEventListener('mouseleave', () => {
+        a.style.background = '';
+      });
+    });
+  }
+
+  function wireSearchBoxes() {
+    document.querySelectorAll('[data-search-box]').forEach((box) => {
+      const input = box.querySelector('[data-search-input]') as HTMLInputElement | null;
+      const clearBtn = box.querySelector('[data-search-clear]') as HTMLButtonElement | null;
+      const dropdown = box.querySelector('[data-search-dropdown]') as HTMLElement | null;
+      const icon = box.querySelector('[data-search-icon]') as HTMLElement | null;
+
+      if (!input || input.dataset.wired) return;
+      input.dataset.wired = '1';
+
+      let debounceTimer: ReturnType<typeof setTimeout>;
+
+      // Show/hide clear button
+      function syncClear() {
+        if (!clearBtn) return;
+        if (input!.value) {
+          clearBtn.classList.remove('opacity-0', 'pointer-events-none');
+          clearBtn.classList.add('opacity-100');
+        } else {
+          clearBtn.classList.add('opacity-0', 'pointer-events-none');
+          clearBtn.classList.remove('opacity-100');
+        }
+      }
+
+      input.addEventListener('input', async (e) => {
+        syncClear();
+        const query = (e.target as HTMLInputElement).value;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          if (!initialized) await initSearch();
+          if (!fuse) return;
+          renderResults(box, fuse.search(query).map((r) => r.item), query);
+        }, 150);
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        input.value = '';
+        syncClear();
+        if (dropdown) hideDropdown(dropdown);
+        if (icon) icon.style.color = 'var(--color-text-muted)';
+        input.focus();
+      });
+
+      // Keyboard navigation
+      input.addEventListener('keydown', (e) => {
+        if (!dropdown) return;
+        const items = [...dropdown.querySelectorAll('[data-result-index]')] as HTMLElement[];
+        const current = dropdown.querySelector('[data-result-active]') as HTMLElement | null;
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = current
+            ? items[Number(current.dataset.resultIndex) + 1] ?? items[0]
+            : items[0];
+          current?.removeAttribute('data-result-active');
+          current && (current.style.background = '');
+          if (next) {
+            next.setAttribute('data-result-active', '');
+            next.style.background = 'var(--color-surface-hover)';
+            next.scrollIntoView({ block: 'nearest' });
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = current
+            ? items[Number(current.dataset.resultIndex) - 1] ?? items[items.length - 1]
+            : items[items.length - 1];
+          current?.removeAttribute('data-result-active');
+          current && (current.style.background = '');
+          if (prev) {
+            prev.setAttribute('data-result-active', '');
+            prev.style.background = 'var(--color-surface-hover)';
+            prev.scrollIntoView({ block: 'nearest' });
+          }
+        } else if (e.key === 'Enter') {
+          const active = dropdown.querySelector('[data-result-active]') as HTMLAnchorElement | null;
+          if (active) { e.preventDefault(); active.click(); }
+        } else if (e.key === 'Escape') {
+          hideDropdown(dropdown);
+          if (icon) icon.style.color = 'var(--color-text-muted)';
+          input.blur();
+        }
+      });
+
+      // Hide on outside click
+      document.addEventListener('click', (e) => {
+        if (dropdown && !box.contains(e.target as Node)) hideDropdown(dropdown);
+      });
+    });
+  }
+
+  wireSearchBoxes();
+  document.addEventListener('astro:after-swap', wireSearchBoxes);
+</script>

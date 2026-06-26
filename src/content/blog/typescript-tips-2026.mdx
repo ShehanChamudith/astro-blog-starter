@@ -1,0 +1,110 @@
+---
+title: "TypeScript Tips That Will Change How You Code"
+description: "Seven underused TypeScript patterns that make your code safer, more expressive, and easier to refactor — with real-world examples."
+publishDate: 2026-03-22
+author: john-smith
+category: Reference
+tags: [typescript, javascript, types, best-practices]
+popularity: 78
+draft: false
+---
+
+TypeScript is everywhere now, but most codebases only scratch the surface of what the type system can do. Here are seven patterns worth adding to your toolkit.
+
+## 1. Branded Types
+
+Prevent primitive type confusion without runtime cost:
+
+```typescript
+type UserId = string & { readonly __brand: 'UserId' };
+type PostId = string & { readonly __brand: 'PostId' };
+
+function brandId<T extends string>(id: string): T {
+  return id as T;
+}
+
+const userId = brandId<UserId>('user_123');
+const postId = brandId<PostId>('post_456');
+
+// TypeScript error: Argument of type 'UserId' is not assignable to 'PostId'
+fetchPost(userId); // caught at compile time!
+```
+
+## 2. Discriminated Unions
+
+Model state machines with exhaustive type narrowing:
+
+```typescript
+type Result<T> =
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; message: string };
+
+function render<T>(result: Result<T>) {
+  switch (result.status) {
+    case 'loading': return 'Loading...';
+    case 'success': return result.data; // data is typed as T here
+    case 'error': return result.message; // TypeScript ensures this is exhaustive
+  }
+}
+```
+
+## 3. `satisfies` Operator
+
+Validate structure without widening the type:
+
+```typescript
+const config = {
+  port: 3000,
+  host: 'localhost',
+} satisfies Record<string, string | number>;
+
+// config.port is still typed as number (not string | number)
+```
+
+## 4. Template Literal Types
+
+Generate string union types programmatically:
+
+```typescript
+type Size = 'sm' | 'md' | 'lg';
+type Variant = 'primary' | 'secondary';
+type ButtonClass = `btn-${Variant}-${Size}`;
+// = 'btn-primary-sm' | 'btn-primary-md' | 'btn-primary-lg' | ...
+```
+
+## 5. `infer` in Conditional Types
+
+Extract types from other types:
+
+```typescript
+type UnpackPromise<T> = T extends Promise<infer U> ? U : T;
+
+type Resolved = UnpackPromise<Promise<{ id: number }>>;
+// = { id: number }
+```
+
+## 6. `NoInfer` Utility (TypeScript 5.4+)
+
+Prevent TypeScript from inferring a generic from a specific argument:
+
+```typescript
+function createStore<T>(initial: T, validator: (val: NoInfer<T>) => boolean) {
+  // T is inferred from `initial`, not `validator`
+}
+```
+
+## 7. `const` Type Parameters
+
+Preserve literal types in generic functions without `as const`:
+
+```typescript
+function route<const T extends string>(path: T): T {
+  return path;
+}
+
+const r = route('/users/:id');
+// r: '/users/:id'  (not just string)
+```
+
+These patterns pay off most in library code and shared utilities where the caller's type safety depends on your generics being precise.

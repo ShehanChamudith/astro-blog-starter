@@ -1,0 +1,32 @@
+---
+import { slugify } from '../../utils/slugify';
+
+interface Props {
+  tags: string[];
+  max?: number;
+}
+
+const { tags, max } = Astro.props;
+const displayTags = max ? tags.slice(0, max) : tags;
+const remaining = max ? Math.max(0, tags.length - max) : 0;
+---
+
+<div class="flex flex-wrap gap-1.5">
+  {displayTags.map((tag) => (
+    <a
+      href={`/tags/${slugify(tag)}`}
+      class="inline-block text-xs px-2.5 py-1 rounded-full font-medium transition-colors hover:opacity-80"
+      style="background: var(--color-surface-hover); color: var(--color-text-secondary);"
+    >
+      #{tag}
+    </a>
+  ))}
+  {remaining > 0 && (
+    <span
+      class="inline-block text-xs px-2.5 py-1 rounded-full font-medium"
+      style="color: var(--color-text-muted);"
+    >
+      +{remaining} more
+    </span>
+  )}
+</div>
