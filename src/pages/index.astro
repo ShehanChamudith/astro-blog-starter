@@ -6,6 +6,7 @@ import LatestArticles from '../components/home/LatestArticles.astro';
 import SearchBox from '../components/search/SearchBox.astro';
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
 import { sortByDate, sortByPopularity } from '../utils/sort-posts';
+import { SITE } from '../config';
 
 type BlogPost = CollectionEntry<'blog'>;
 
@@ -17,12 +18,12 @@ const featuredAuthor = await getEntry('authors', featuredPost.data.author.id);
 const popular = sortByPopularity(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
 const latest = sortByDate(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
 
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://yourdomain.com';
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? SITE.url;
 const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'DevBlog',
+    name: SITE.name,
     url: siteUrl,
     potentialAction: {
       '@type': 'SearchAction',
@@ -33,14 +34,14 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'DevBlog',
+    name: SITE.name,
     url: siteUrl,
     logo: `${siteUrl}/favicon.svg`,
   },
 ];
 ---
 
-<PageLayout title="DevBlog — Web Development Articles" description="Articles about web development, modern tooling, CSS, TypeScript, and the open web." jsonLd={jsonLd}>
+<PageLayout title={`${SITE.name} — Web Development Articles`} description={SITE.description} jsonLd={jsonLd}>
 
   <!-- Site hero / search -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 text-center">

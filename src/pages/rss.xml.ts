@@ -1,6 +1,7 @@
 import rss from '@astrojs/rss';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { APIContext } from 'astro';
+import { SITE } from '../config';
 
 export async function GET(context: APIContext) {
   const posts = await getCollection('blog', ({ data }: CollectionEntry<'blog'>) => !data.draft);
@@ -9,8 +10,8 @@ export async function GET(context: APIContext) {
   );
 
   return rss({
-    title: 'DevBlog',
-    description: 'Articles about web development, modern tooling, CSS, TypeScript, and the open web.',
+    title: SITE.name,
+    description: SITE.description,
     site: context.site!,
     items: sorted.map((post) => ({
       title: post.data.title,
@@ -18,6 +19,6 @@ export async function GET(context: APIContext) {
       description: post.data.description,
       link: `/blog/${post.id}/`,
     })),
-    customData: `<language>en-us</language>`,
+    customData: `<language>${SITE.rssLanguage}</language>`,
   });
 }

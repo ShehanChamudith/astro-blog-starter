@@ -9,6 +9,7 @@ import PostMeta from '../components/blog/PostMeta.astro';
 import RelatedPosts from '../components/blog/RelatedPosts.astro';
 import type { CollectionEntry } from 'astro:content';
 import type { MarkdownHeading } from 'astro';
+import { SITE } from '../config';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -20,7 +21,7 @@ interface Props {
 
 const { post, author, headings, relatedPosts, readingTimeMin } = Astro.props;
 const { title, description, publishDate, coverImage, coverImageAlt } = post.data;
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://yourdomain.com';
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? SITE.url;
 const ogImage = coverImage ? `${siteUrl}${coverImage.src}` : undefined;
 
 const postUrl = `${siteUrl}/blog/${post.id}`;
@@ -50,7 +51,7 @@ const jsonLd = [
   },
   publisher: {
     '@type': 'Organization',
-    name: 'DevBlog',
+    name: SITE.name,
     url: siteUrl,
   },
   ...(coverImage ? { image: `${siteUrl}${coverImage.src}` } : {}),

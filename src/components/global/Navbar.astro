@@ -1,6 +1,7 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
 import SearchBox from '../search/SearchBox.astro';
+import { SITE } from '../../config';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -19,8 +20,8 @@ const currentPath = Astro.url.pathname;
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
       <a href="/" class="flex items-center gap-2 font-bold text-xl" style="color: var(--color-text-primary);">
-        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="background: var(--color-accent);">D</span>
-        <span>DevBlog</span>
+        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="background: var(--color-accent);">{SITE.logoLetter}</span>
+        <span>{SITE.name}</span>
       </a>
 
       <!-- Desktop nav -->

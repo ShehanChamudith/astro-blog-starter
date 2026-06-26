@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
+import { SITE } from '../config';
 
 interface Props {
   title: string;
@@ -28,7 +29,7 @@ const {
   nextUrl,
 } = Astro.props;
 
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://yourdomain.com').toString();
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? SITE.url).toString();
 ---
 
 <!doctype html>
