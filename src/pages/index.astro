@@ -16,9 +16,31 @@ const featuredAuthor = await getEntry('authors', featuredPost.data.author.id);
 
 const popular = sortByPopularity(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
 const latest = sortByDate(allPosts.filter((p: BlogPost) => p.id !== featuredPost.id)).slice(0, 6);
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://yourdomain.com';
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'DevBlog',
+    url: siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/blog?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'DevBlog',
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.svg`,
+  },
+];
 ---
 
-<PageLayout title="DevBlog — Web Development Articles" description="Articles about web development, modern tooling, CSS, TypeScript, and the open web.">
+<PageLayout title="DevBlog — Web Development Articles" description="Articles about web development, modern tooling, CSS, TypeScript, and the open web." jsonLd={jsonLd}>
 
   <!-- Site hero / search -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 text-center">

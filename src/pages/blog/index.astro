@@ -11,9 +11,10 @@ const allPosts = await getCollection('blog', ({ data }: CollectionEntry<'blog'>)
 const sorted = sortByDate(allPosts);
 const posts = sorted.slice(0, PAGE_SIZE);
 const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+const nextUrl = totalPages > 1 ? '/blog/page/2' : undefined;
 ---
 
-<PageLayout title="Blog — All Articles" description="Browse all articles on web development, design, and the modern web.">
+<PageLayout title="Blog — All Articles" description="Browse all articles on web development, design, and the modern web." nextUrl={nextUrl}>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-10">
       <h1 class="text-3xl sm:text-4xl font-bold" style="color: var(--color-text-primary);">All Articles</h1>

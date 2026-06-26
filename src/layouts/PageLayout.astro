@@ -10,12 +10,15 @@ interface Props {
   ogImage?: string;
   ogType?: 'website' | 'article';
   noindex?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  prevUrl?: string;
+  nextUrl?: string;
 }
 
-const { title, description, ogImage, ogType, noindex } = Astro.props;
+const { title, description, ogImage, ogType, noindex, jsonLd, prevUrl, nextUrl } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} ogImage={ogImage} ogType={ogType} noindex={noindex}>
+<BaseLayout title={title} description={description} ogImage={ogImage} ogType={ogType} noindex={noindex} jsonLd={jsonLd} prevUrl={prevUrl} nextUrl={nextUrl}>
   <div class="min-h-screen flex flex-col" style="background: var(--color-bg);">
     <Navbar />
     <main class="flex-1">

@@ -30,9 +30,17 @@ interface Props {
 }
 
 const { posts, currentPage, totalPages, totalPosts } = Astro.props;
+
+const prevUrl = currentPage > 1 ? `/blog/page/${currentPage - 1}` : undefined;
+const nextUrl = currentPage < totalPages ? `/blog/page/${currentPage + 1}` : undefined;
 ---
 
-<PageLayout title={`Blog — Page ${currentPage}`} description="Browse all articles on web development, design, and the modern web.">
+<PageLayout
+  title={`Blog — Page ${currentPage}`}
+  description="Browse all articles on web development, design, and the modern web."
+  prevUrl={prevUrl}
+  nextUrl={nextUrl}
+>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-10">
       <h1 class="text-3xl sm:text-4xl font-bold" style="color: var(--color-text-primary);">All Articles</h1>

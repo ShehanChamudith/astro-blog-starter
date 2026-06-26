@@ -1,0 +1,16 @@
+{
+  "name": "DevBlog",
+  "short_name": "DevBlog",
+  "description": "Articles about web development, modern tooling, CSS, TypeScript, and the open web.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
