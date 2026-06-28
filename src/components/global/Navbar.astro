@@ -1,0 +1,194 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import SearchBox from '../search/SearchBox.astro';
+import { SITE } from '../../config';
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/tags', label: 'Tags' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header
+  class="sticky top-0 z-50 border-b backdrop-blur-md"
+  style="background: color-mix(in srgb, var(--color-bg) 85%, transparent); border-color: var(--color-border);"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2 font-bold text-xl" style="color: var(--color-text-primary);">
+        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="background: var(--color-accent);">{SITE.logoLetter}</span>
+        <span>{SITE.name}</span>
+      </a>
+
+      <!-- Desktop nav -->
+      <nav class="hidden md:flex items-center gap-1">
+        {navLinks.map((link) => {
+          const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
+          return (
+            <a
+              href={link.href}
+              class={`px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'font-semibold' : 'hover:opacity-80'}`}
+              style={isActive
+                ? 'color: var(--color-accent);'
+                : 'color: var(--color-text-secondary);'}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <!-- Search trigger -->
+        <button
+          id="search-trigger"
+          aria-label="Open search"
+          aria-expanded="false"
+          aria-controls="search-overlay"
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:opacity-80 text-sm"
+          style="color: var(--color-text-secondary); background: var(--color-surface);"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+          <span style="color: var(--color-text-muted);">Search</span>
+          <kbd class="text-xs px-1.5 py-0.5 rounded font-mono" style="background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text-muted);">⌘K</kbd>
+        </button>
+        <!-- Mobile search icon only -->
+        <button
+          id="search-trigger-mobile"
+          aria-label="Open search"
+          class="sm:hidden p-2 rounded-lg transition-colors hover:opacity-80"
+          style="color: var(--color-text-secondary); background: var(--color-surface);"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+        </button>
+
+        <ThemeToggle />
+
+        <!-- Mobile menu button -->
+        <button
+          id="mobile-menu-btn"
+          aria-label="Toggle mobile menu"
+          class="md:hidden p-2 rounded-lg"
+          style="color: var(--color-text-secondary);"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12"/>
+            <line x1="4" x2="20" y1="6" y2="6"/>
+            <line x1="4" x2="20" y1="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile nav -->
+    <nav id="mobile-menu" class="hidden md:hidden pb-4">
+      {navLinks.map((link) => {
+        const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
+        return (
+          <a
+            href={link.href}
+            class="block px-3 py-2 rounded-md text-sm font-medium"
+            style={isActive
+              ? 'color: var(--color-accent); background: var(--color-accent-subtle);'
+              : 'color: var(--color-text-secondary);'}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </nav>
+  </div>
+</header>
+
+<!-- Search overlay -->
+<div
+  id="search-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Search"
+  class="fixed inset-0 z-100 flex items-start justify-center pt-20 px-4 opacity-0 pointer-events-none transition-opacity duration-150"
+  style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);"
+>
+  <div
+    class="w-full max-w-xl rounded-2xl shadow-2xl p-4"
+    style="background: var(--color-bg); border: 1px solid var(--color-border);"
+    id="search-overlay-panel"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="text-sm font-semibold" style="color: var(--color-text-secondary);">Search articles</span>
+      <button
+        id="search-close"
+        aria-label="Close search"
+        class="p-1 rounded-md hover:opacity-70 transition-opacity"
+        style="color: var(--color-text-muted);"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <SearchBox instanceId="navbar" placeholder="Search articles..." compact={true} />
+  </div>
+</div>
+
+<script>
+  function initNavbar() {
+    const trigger = document.getElementById('search-trigger');
+    const triggerMobile = document.getElementById('search-trigger-mobile');
+    const overlay = document.getElementById('search-overlay');
+    const closeBtn = document.getElementById('search-close');
+    const panel = document.getElementById('search-overlay-panel');
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    function openSearch() {
+      overlay?.classList.remove('opacity-0', 'pointer-events-none');
+      trigger?.setAttribute('aria-expanded', 'true');
+      const input = overlay?.querySelector('[data-search-input]') as HTMLInputElement | null;
+      input?.focus();
+    }
+
+    function closeSearch() {
+      overlay?.classList.add('opacity-0', 'pointer-events-none');
+      trigger?.setAttribute('aria-expanded', 'false');
+    }
+
+    trigger?.addEventListener('click', openSearch);
+    triggerMobile?.addEventListener('click', openSearch);
+    closeBtn?.addEventListener('click', closeSearch);
+
+    // Close on backdrop click (not panel click)
+    overlay?.addEventListener('click', (e) => {
+      if (!panel?.contains(e.target as Node)) closeSearch();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeSearch();
+      } else if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        openSearch();
+      }
+    });
+
+    // Mobile menu toggle
+    mobileBtn?.addEventListener('click', () => {
+      mobileMenu?.classList.toggle('hidden');
+    });
+  }
+
+  initNavbar();
+  document.addEventListener('astro:after-swap', initNavbar);
+</script>

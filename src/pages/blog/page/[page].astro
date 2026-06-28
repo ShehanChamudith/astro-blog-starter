@@ -1,0 +1,58 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import PostCard from '../../../components/blog/PostCard.astro';
+import Pagination from '../../../components/blog/Pagination.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { sortByDate } from '../../../utils/sort-posts';
+
+export async function getStaticPaths() {
+  const PAGE_SIZE = 9;
+  const allPosts = await getCollection('blog', ({ data }: CollectionEntry<'blog'>) => !data.draft);
+  const sorted = sortByDate(allPosts);
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+    props: {
+      posts: sorted.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE),
+      currentPage: i + 1,
+      totalPages,
+      totalPosts: sorted.length,
+    },
+  }));
+}
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+  currentPage: number;
+  totalPages: number;
+  totalPosts: number;
+}
+
+const { posts, currentPage, totalPages, totalPosts } = Astro.props;
+
+const prevUrl = currentPage > 1 ? `/blog/page/${currentPage - 1}` : undefined;
+const nextUrl = currentPage < totalPages ? `/blog/page/${currentPage + 1}` : undefined;
+---
+
+<PageLayout
+  title={`Blog — Page ${currentPage}`}
+  description="Browse all articles on web development, design, and the modern web."
+  prevUrl={prevUrl}
+  nextUrl={nextUrl}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <h1 class="text-3xl sm:text-4xl font-bold" style="color: var(--color-text-primary);">All Articles</h1>
+      <p class="mt-2 text-lg" style="color: var(--color-text-secondary);">
+        Page {currentPage} of {totalPages} &middot; {totalPosts} articles
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+
+    <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/blog" />
+  </div>
+</PageLayout>

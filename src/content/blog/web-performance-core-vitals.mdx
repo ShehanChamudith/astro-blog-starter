@@ -1,0 +1,78 @@
+---
+title: "Core Web Vitals: What Actually Moves the Needle"
+description: "A practical breakdown of LCP, INP, and CLS — what causes them to fail and the specific code changes that fix them."
+publishDate: 2026-04-15
+author: jane-doe
+category: Guide
+tags: [performance, core-web-vitals, seo, javascript]
+popularity: 91
+draft: false
+---
+
+Core Web Vitals have been a Google ranking signal since 2021, but most articles focus on theory. Here's what actually moves the needle in practice.
+
+## LCP: Largest Contentful Paint
+
+LCP measures how long it takes for the largest visible content element to render. The target is under 2.5 seconds.
+
+**The most common cause of poor LCP:** an `<img>` without explicit dimensions, loaded lazily, with no preload hint.
+
+### Fix it:
+
+```html
+<!-- Bad -->
+<img src="/hero.jpg" loading="lazy" />
+
+<!-- Good -->
+<link rel="preload" as="image" href="/hero.jpg" fetchpriority="high" />
+<img src="/hero.jpg" width="1200" height="630" loading="eager" fetchpriority="high" />
+```
+
+The LCP image should **never** be lazy-loaded. Use `fetchpriority="high"` and a `<link rel="preload">` in the `<head>`.
+
+## INP: Interaction to Next Paint
+
+INP replaced FID in March 2024. It measures the worst interaction latency across the entire page visit. Target: under 200ms.
+
+**The most common cause:** long tasks on the main thread triggered by click/keydown handlers.
+
+### Fix it with `scheduler.yield()`:
+
+```javascript
+button.addEventListener('click', async () => {
+  // Do synchronous work
+  updateUI();
+  
+  // Yield to the browser so it can paint
+  await scheduler.yield();
+  
+  // Continue with expensive work
+  await processData();
+});
+```
+
+Breaking long tasks with `scheduler.yield()` gives the browser a chance to paint between chunks of work, dramatically improving perceived responsiveness.
+
+## CLS: Cumulative Layout Shift
+
+CLS measures unexpected layout shifts. Target: under 0.1.
+
+**The most common cause:** images and embeds without explicit dimensions causing layout reflow as they load.
+
+### Fix it:
+
+```css
+img, video, iframe {
+  aspect-ratio: attr(width) / attr(height);
+}
+```
+
+Or explicitly set `width` and `height` attributes on every `<img>`. Browsers use these to reserve space before the image loads.
+
+Font swaps are another CLS culprit. Use `font-display: optional` if you can tolerate the fallback, or `font-display: swap` with a carefully matched fallback font stack.
+
+## The One Thing Most Teams Miss
+
+Real User Monitoring (RUM) data almost always differs from lab data. Chrome UX Report (CrUX) data in Google Search Console shows what real users experience on real devices and connections — often 3G phones in emerging markets.
+
+Run your optimisations against CrUX, not just Lighthouse.

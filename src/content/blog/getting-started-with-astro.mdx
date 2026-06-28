@@ -1,0 +1,76 @@
+---
+title: "Getting Started with Astro: The Web Framework for Content"
+description: "Astro is a modern static site generator that lets you use your favourite UI framework while shipping zero JavaScript by default."
+publishDate: 2026-06-01
+author: jane-doe
+category: Tutorial
+tags: [astro, javascript, web-development, static-site]
+featured: true
+popularity: 95
+draft: false
+---
+
+Astro is one of the most exciting frameworks to emerge in recent years. It takes a different approach from React or Vue — instead of building a JavaScript-heavy SPA, Astro renders everything to static HTML at build time and only hydrates the specific interactive islands that need it.
+
+## Why Astro?
+
+The core idea is **Islands Architecture**. You write your UI in whichever component format you prefer — Astro, React, Vue, Svelte, Solid — and Astro compiles each page to static HTML. JavaScript is only sent to the browser for components you explicitly mark as interactive.
+
+The result? Near-perfect Lighthouse scores out of the box.
+
+## Setting Up Your First Project
+
+```bash
+pnpm create astro@latest my-site
+cd my-site
+pnpm dev
+```
+
+You'll be greeted by the Astro CLI which walks you through selecting a template, TypeScript strictness, and whether to initialise a git repo.
+
+## Understanding Pages
+
+Every file in `src/pages/` maps directly to a URL. An `index.astro` file becomes `/`, `about.astro` becomes `/about`, and so on.
+
+```astro
+---
+// This is the frontmatter — runs at build time on the server
+const greeting = "Hello from Astro!";
+---
+
+<h1>{greeting}</h1>
+```
+
+The frontmatter between `---` fences runs at build time. It's just JavaScript — you can import data, call APIs, read the filesystem, or do anything Node.js supports.
+
+## Content Collections
+
+For a blog, the **Content Collections API** is where Astro really shines. You define a Zod schema for your Markdown/MDX files and Astro gives you fully-typed access to all your content at build time.
+
+```typescript
+// src/content/config.ts
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
+
+const blog = defineCollection({
+  loader: glob({ pattern: '**/*.mdx', base: './src/content/blog' }),
+  schema: z.object({
+    title: z.string(),
+    publishDate: z.coerce.date(),
+    // ...
+  }),
+});
+
+export const collections = { blog };
+```
+
+## What's Next?
+
+From here, you can explore:
+
+- Adding an MDX integration for richer content
+- Setting up Tailwind CSS for styling
+- Deploying to Vercel, Netlify, or Cloudflare Pages
+
+Astro is deliberately simple to start with but scales beautifully to complex sites. Give it a try!

@@ -1,0 +1,63 @@
+---
+title: "RSS Feeds Still Matter in 2026"
+description: "RSS is not dead — it's the foundation of a healthy open web. Here's why every blog should have one and how to add it to Astro in five minutes."
+publishDate: 2026-03-08
+author: jane-doe
+category: Opinion
+tags: [rss, open-web, blogging, astro]
+popularity: 60
+draft: false
+---
+
+Every few years someone publishes a "RSS is dead" post. They're wrong. RSS feeds more content to more people than most social media algorithms, it just does it quietly.
+
+## Who Still Uses RSS?
+
+Developers, researchers, writers, and anyone who curates their own information diet instead of outsourcing it to an algorithm. Tools like Feedly, NetNewsWire, and Reeder have millions of active users.
+
+More importantly: RSS is what allows your content to be syndicated to aggregators, podcast apps, read-it-later tools, and newsletter tools. If you don't have one, you're invisible to this entire distribution channel.
+
+## Adding RSS to Astro
+
+Install the integration:
+
+```bash
+pnpm add @astrojs/rss
+```
+
+Create `src/pages/rss.xml.ts`:
+
+```typescript
+import rss from '@astrojs/rss';
+import { getCollection } from 'astro:content';
+import type { APIContext } from 'astro';
+
+export async function GET(context: APIContext) {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return rss({
+    title: 'My Blog',
+    description: 'Articles about web development',
+    site: context.site!,
+    items: posts
+      .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
+      .map((post) => ({
+        title: post.data.title,
+        pubDate: post.data.publishDate,
+        description: post.data.description,
+        link: `/blog/${post.id}/`,
+      })),
+  });
+}
+```
+
+That generates a valid RSS 2.0 feed at `/rss.xml`. Add a discovery link in your `<head>`:
+
+```html
+<link rel="alternate" type="application/rss+xml" title="My Blog" href="/rss.xml" />
+```
+
+## The Bigger Picture
+
+An RSS feed is a contract with your readers: "You can follow my writing on your own terms, in your own tool, without needing an account or accepting my terms of service." It's one of the kindest things a blogger can do.
+
+In a world increasingly shaped by algorithmic feeds and platform lock-in, an RSS feed is a small act of resistance in favour of the open web.

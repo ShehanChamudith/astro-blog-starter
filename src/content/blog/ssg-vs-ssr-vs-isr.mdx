@@ -1,0 +1,68 @@
+---
+title: "SSG vs SSR vs ISR: Choosing the Right Rendering Strategy"
+description: "A clear breakdown of static site generation, server-side rendering, and incremental static regeneration — with a decision framework for your next project."
+publishDate: 2026-01-30
+author: jane-doe
+category: Case Study
+tags: [architecture, performance, ssg, ssr]
+popularity: 84
+draft: false
+---
+
+One of the first architectural decisions for any web project is how pages get rendered. Here's a clear breakdown of the three main strategies.
+
+## Static Site Generation (SSG)
+
+Pages are rendered to HTML at **build time**. The HTML file is served directly from a CDN — no server computation per request.
+
+**Best for:** Blogs, documentation, marketing sites, portfolios — any content that doesn't change per-user or per-request.
+
+**Pros:** Fastest possible TTFB, trivially scalable, works offline, cheapest to host.
+
+**Cons:** New content requires a rebuild and redeploy. Personalised content is impossible without client-side JavaScript.
+
+```javascript
+// Astro example — getStaticPaths runs at build time
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+```
+
+## Server-Side Rendering (SSR)
+
+Pages are rendered to HTML **on demand**, per request. A Node.js (or Deno/Bun) process handles each request.
+
+**Best for:** Dashboards, e-commerce (cart, checkout, inventory), social networks — anything with user-specific or frequently-changing content.
+
+**Pros:** Always up-to-date, can use request context (cookies, headers, auth), personalised content is easy.
+
+**Cons:** Slower TTFB (server must compute before responding), requires a server (cost + ops overhead), harder to scale to arbitrary traffic.
+
+## Incremental Static Regeneration (ISR)
+
+A hybrid: pages are pre-rendered at build time **and** re-generated in the background after a configurable TTL (e.g. every 60 seconds).
+
+**Best for:** News sites, product listings, anything that changes regularly but doesn't need to be real-time.
+
+**Pros:** SSG performance on first request, content stays fresh without full rebuilds.
+
+**Cons:** You may serve stale content within the TTL window. Requires a platform that supports ISR (Vercel, Netlify, Cloudflare).
+
+## The Decision Framework
+
+1. **Does the content change per-user or per-request?** → SSR
+2. **Does the content update frequently (multiple times per day)?** → ISR or SSR
+3. **Does the content change infrequently (hours to days)?** → SSG
+4. **Is this a blog, docs site, or portfolio?** → SSG, always
+
+A common pattern: use SSG for the public-facing site and SSR for the authenticated app section — best of both worlds.
+
+## Astro's Approach
+
+Astro gives you SSG by default and SSR on demand (set `output: 'server'` and add an adapter). You can even mix — mark individual pages with `export const prerender = false` to opt them into SSR while the rest of the site remains static.
+
+This flexibility makes Astro a great choice regardless of which strategy fits your project.

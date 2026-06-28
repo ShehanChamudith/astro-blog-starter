@@ -1,0 +1,66 @@
+---
+title: "Tailwind CSS v4: The CSS-First Revolution"
+description: "Tailwind v4 rewrites the configuration model entirely — no more tailwind.config.js, everything lives in your CSS file using native CSS features."
+publishDate: 2026-05-20
+author: john-smith
+category: Guide
+tags: [tailwind, css, styling, web-development]
+popularity: 88
+draft: false
+---
+
+Tailwind CSS v4 is a ground-up rewrite of the framework. The biggest change? Configuration moves from a JavaScript file into your CSS file, using native CSS features like `@layer`, custom properties, and `@theme`.
+
+## The New Configuration Model
+
+In v3, you had a `tailwind.config.js` file with a big JavaScript object. In v4, all of that lives in your CSS:
+
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-brand: oklch(0.6 0.2 270);
+  --font-family-display: 'Cabinet Grotesk', sans-serif;
+  --spacing-xl: 3rem;
+}
+```
+
+Any CSS variable you define under `@theme` automatically becomes a Tailwind utility. `--color-brand` gives you `text-brand`, `bg-brand`, `border-brand`, and so on.
+
+## Using the Vite Plugin
+
+Tailwind v4 ships a first-party Vite plugin that replaces the PostCSS approach:
+
+```javascript
+// vite.config.js or astro.config.mjs
+import tailwindcss from '@tailwindcss/vite';
+
+export default {
+  vite: {
+    plugins: [tailwindcss()],
+  },
+};
+```
+
+That's it. No `postcss.config.js`, no `@tailwind base/components/utilities` directives. Just `@import "tailwindcss"` in your CSS entry file.
+
+## CSS Custom Variants
+
+One powerful new feature is `@variant`, which lets you define your own variant based on any CSS selector:
+
+```css
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@variant hocus (&:hover, &:focus-visible);
+```
+
+This is perfect for data-attribute-based dark mode — no more fighting with the `darkMode: 'class'` config option.
+
+## Performance
+
+The v4 engine is written in Rust (via Oxide) and is dramatically faster than v3. On a large project with thousands of classes, `@tailwindcss/vite` generates CSS in single-digit milliseconds.
+
+## Should You Upgrade?
+
+If you're starting a new project, absolutely use v4. For existing projects, the migration guide handles most cases automatically with the `@tailwindcss/upgrade` codemod.
+
+The mental model shift from JavaScript config to CSS config is small but the payoff in simplicity and performance is significant.

@@ -1,0 +1,110 @@
+---
+title: "CSS Grid Layout Patterns You'll Actually Use"
+description: "Five CSS Grid patterns for real-world layouts — from responsive card grids to full-bleed article layouts — with copy-paste code."
+publishDate: 2026-02-14
+author: john-smith
+category: Reference
+tags: [css, grid, layout, frontend]
+popularity: 70
+draft: false
+---
+
+CSS Grid has been well-supported for years, but many developers still reach for flexbox for everything. Here are five grid patterns worth memorising.
+
+## 1. Auto-Fill Responsive Card Grid
+
+No media queries needed:
+
+```css
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+```
+
+Cards are at least 300px wide and fill available space. When the container gets narrow enough that only one card fits, it spans the full width.
+
+## 2. Full-Bleed Article Layout
+
+Constrain text width while allowing certain elements (images, callouts) to break out:
+
+```css
+.article {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(0, 1fr)
+    [content-start] min(65ch, 100%)
+    [content-end] minmax(0, 1fr)
+    [full-end];
+}
+
+.article > * {
+  grid-column: content;
+}
+
+.article > .full-bleed {
+  grid-column: full;
+}
+```
+
+## 3. Holy Grail Layout
+
+Header, footer, sidebar, and main content:
+
+```css
+.page {
+  display: grid;
+  grid-template:
+    "header header" auto
+    "sidebar main" 1fr
+    "footer footer" auto
+    / 240px 1fr;
+  min-height: 100vh;
+}
+
+.page-header { grid-area: header; }
+.page-sidebar { grid-area: sidebar; }
+.page-main { grid-area: main; }
+.page-footer { grid-area: footer; }
+```
+
+## 4. Masonry-Style Layout
+
+CSS Grid's `masonry` value is now available in most browsers (behind a flag in some):
+
+```css
+.masonry {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: masonry;
+  gap: 1rem;
+}
+```
+
+For broad compatibility, use a JavaScript solution or CSS columns as a fallback.
+
+## 5. Stacked Cards (z-axis layering)
+
+Place multiple elements in the same grid cell:
+
+```css
+.stack {
+  display: grid;
+}
+
+.stack > * {
+  grid-area: 1 / 1; /* all children in cell row 1, column 1 */
+}
+
+.stack > .overlay {
+  align-self: end;
+  background: linear-gradient(to top, black 0%, transparent 100%);
+}
+```
+
+This is perfect for image cards with text overlays — no `position: absolute` needed.
+
+## Key Mental Model
+
+Grid is for **two-dimensional layout** (rows and columns simultaneously). Flexbox is for **one-dimensional layout** (either a row or a column). When you need both axes at once, Grid is almost always the right tool.

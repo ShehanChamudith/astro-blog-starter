@@ -1,0 +1,78 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { sortByDate } from '../../utils/sort-posts';
+
+export async function getStaticPaths() {
+  const authors = await getCollection('authors');
+  const allPosts = await getCollection('blog', ({ data }: CollectionEntry<'blog'>) => !data.draft);
+
+  return authors.map((author) => ({
+    params: { author: author.id },
+    props: {
+      author,
+      posts: sortByDate(allPosts.filter((p) => p.data.author.id === author.id)),
+    },
+  }));
+}
+
+interface Props {
+  author: CollectionEntry<'authors'>;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { author, posts } = Astro.props;
+const { name, bio, twitter, github, website } = author.data;
+const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+---
+
+<PageLayout title={`${name} — Author`} description={bio}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Author profile -->
+    <div class="flex flex-col sm:flex-row items-start gap-6 mb-12 pb-12 border-b" style="border-color: var(--color-border);">
+      <div
+        class="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0"
+        style="background: var(--color-accent);"
+        aria-hidden="true"
+      >
+        {initials}
+      </div>
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold" style="color: var(--color-text-primary);">{name}</h1>
+        <p class="mt-2 text-base leading-relaxed max-w-xl" style="color: var(--color-text-secondary);">{bio}</p>
+        <div class="mt-4 flex flex-wrap gap-4">
+          {twitter && (
+            <a href={`https://twitter.com/${twitter}`} target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:opacity-70 transition-opacity" style="color: var(--color-accent);">
+              Twitter / X @{twitter}
+            </a>
+          )}
+          {github && (
+            <a href={`https://github.com/${github}`} target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:opacity-70 transition-opacity" style="color: var(--color-accent);">
+              GitHub @{github}
+            </a>
+          )}
+          {website && (
+            <a href={website} target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:opacity-70 transition-opacity" style="color: var(--color-accent);">
+              Website
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- Author's posts -->
+    <h2 class="text-xl font-bold mb-6" style="color: var(--color-text-primary);">
+      Articles by {name}
+      <span class="ml-2 text-base font-normal" style="color: var(--color-text-muted);">({posts.length})</span>
+    </h2>
+
+    {posts.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {posts.map((post) => <PostCard post={post} />)}
+      </div>
+    ) : (
+      <p style="color: var(--color-text-muted);">No articles yet.</p>
+    )}
+  </div>
+</PageLayout>

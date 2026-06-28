@@ -1,0 +1,108 @@
+---
+title: "Building Static Site Search with Fuse.js"
+description: "Add fast, zero-dependency client-side search to any static site using Fuse.js and a pre-built JSON index — no search server required."
+publishDate: 2026-04-28
+author: john-smith
+category: Tutorial
+tags: [search, fuse.js, javascript, performance]
+popularity: 75
+draft: false
+---
+
+Static sites are fast, cheap to host, and easy to deploy — but they give up server-side search. Here's a battle-tested approach to add full-text search using only a pre-built JSON index and Fuse.js.
+
+## The Architecture
+
+At build time, generate a JSON file containing the searchable fields of all your posts:
+
+```json
+[
+  {
+    "slug": "getting-started",
+    "title": "Getting Started with Astro",
+    "description": "A guide to...",
+    "tags": ["astro", "tutorial"],
+    "category": "Tutorial"
+  }
+]
+```
+
+At runtime, Fuse.js loads this index and does fuzzy matching in-memory in the browser. For a typical blog with hundreds of posts, the index is a few hundred KB — perfectly acceptable.
+
+## Generating the Index in Astro
+
+Create a static endpoint at `src/pages/search-index.json.ts`:
+
+```typescript
+import { getCollection } from 'astro:content';
+
+export async function GET() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const index = posts.map((p) => ({
+    slug: p.id,
+    title: p.data.title,
+    description: p.data.description,
+    tags: p.data.tags,
+    category: p.data.category,
+  }));
+  return new Response(JSON.stringify(index), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+```
+
+Astro treats this as a static file and writes `/search-index.json` to `dist/`.
+
+## Setting Up Fuse.js
+
+```bash
+pnpm add fuse.js
+```
+
+```javascript
+import Fuse from 'fuse.js';
+
+let fuse;
+
+async function initSearch() {
+  const res = await fetch('/search-index.json');
+  const data = await res.json();
+  fuse = new Fuse(data, {
+    keys: ['title', 'description', 'tags', 'category'],
+    threshold: 0.3,
+    includeScore: true,
+  });
+}
+
+function search(query) {
+  if (!fuse) return [];
+  return fuse.search(query).map((r) => r.item);
+}
+```
+
+## Lazy Loading
+
+Fetch the index only on first keypress to avoid blocking page load:
+
+```javascript
+let initialized = false;
+
+input.addEventListener('input', async (e) => {
+  if (!initialized) {
+    await initSearch();
+    initialized = true;
+  }
+  const results = search(e.target.value);
+  renderResults(results);
+});
+```
+
+## Tuning the Threshold
+
+The `threshold` option (0 = exact match, 1 = match anything) is the most important setting to tune. `0.3` works well for a blog — it allows for typos and partial matches without returning irrelevant results.
+
+## Limitations
+
+Fuse.js doesn't index post body content (that would make the JSON file very large). For full-body search on a large site, consider Pagefind, which runs a build-time indexing step and generates compressed index files optimised for the browser.
+
+For most blogs, title + description + tags is more than sufficient.

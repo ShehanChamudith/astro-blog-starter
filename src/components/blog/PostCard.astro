@@ -1,0 +1,84 @@
+---
+import CategoryBadge from './CategoryBadge.astro';
+import TagList from './TagList.astro';
+import type { CollectionEntry } from 'astro:content';
+import { readingTime } from '../../utils/reading-time';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  featured?: boolean;
+}
+
+const { post, featured = false } = Astro.props;
+const { title, description, publishDate, category, tags, coverImage, coverImageAlt, popularity } = post.data;
+
+const minutes = readingTime(post.body ?? '');
+const formattedDate = publishDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+const isTrending = popularity >= 80;
+---
+
+<article
+  class={`group rounded-2xl overflow-hidden border transition-shadow hover:shadow-lg flex flex-col ${featured ? 'lg:flex-row' : ''}`}
+  style="border-color: var(--color-border); background: var(--color-surface); --tw-shadow: var(--shadow-md);"
+>
+  <!-- Cover image -->
+  {coverImage ? (
+    <a
+      href={`/blog/${post.id}`}
+      class={`block overflow-hidden ${featured ? 'lg:w-1/2 lg:aspect-auto aspect-video' : 'aspect-video'}`}
+    >
+      <img
+        src={coverImage.src}
+        alt={coverImageAlt ?? title}
+        width={coverImage.width}
+        height={coverImage.height}
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+      />
+    </a>
+  ) : (
+    <a
+      href={`/blog/${post.id}`}
+      class={`block overflow-hidden ${featured ? 'lg:w-1/2 aspect-video' : 'aspect-video'} flex items-center justify-center`}
+      style="background: linear-gradient(135deg, var(--color-accent-subtle), var(--color-surface-hover));"
+    >
+      <span class="text-5xl opacity-30">📝</span>
+    </a>
+  )}
+
+  <!-- Content -->
+  <div class="flex flex-col flex-1 p-5 sm:p-6">
+    <div class="flex items-center gap-2 flex-wrap">
+      <CategoryBadge category={category} size="sm" />
+      {isTrending && (
+        <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium" style="background: #fef3c7; color: #92400e;">
+          🔥 Trending
+        </span>
+      )}
+    </div>
+
+    <a href={`/blog/${post.id}`} class="mt-3 block">
+      <h2 class={`font-bold leading-snug transition-colors group-hover:opacity-80 ${featured ? 'text-xl sm:text-2xl' : 'text-lg'}`} style="color: var(--color-text-primary);">
+        {title}
+      </h2>
+    </a>
+
+    <p class="mt-2 text-sm leading-relaxed line-clamp-2 flex-1" style="color: var(--color-text-secondary);">
+      {description}
+    </p>
+
+    <div class="mt-4 pt-4 border-t flex items-center justify-between gap-2 flex-wrap" style="border-color: var(--color-border);">
+      <div class="flex items-center gap-2 text-xs" style="color: var(--color-text-muted);">
+        <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+        <span aria-hidden="true">&middot;</span>
+        <span>{minutes} min read</span>
+      </div>
+      {tags.length > 0 && <TagList tags={tags} max={2} />}
+    </div>
+  </div>
+</article>

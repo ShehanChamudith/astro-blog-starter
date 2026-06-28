@@ -1,0 +1,135 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Navbar from '../components/global/Navbar.astro';
+import Footer from '../components/global/Footer.astro';
+import BackToTop from '../components/global/BackToTop.astro';
+import TableOfContents from '../components/blog/TableOfContents.astro';
+import AuthorCard from '../components/blog/AuthorCard.astro';
+import PostMeta from '../components/blog/PostMeta.astro';
+import RelatedPosts from '../components/blog/RelatedPosts.astro';
+import type { CollectionEntry } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+import { SITE } from '../config';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  author: CollectionEntry<'authors'>;
+  headings: MarkdownHeading[];
+  relatedPosts: CollectionEntry<'blog'>[];
+  readingTimeMin: number;
+}
+
+const { post, author, headings, relatedPosts, readingTimeMin } = Astro.props;
+const { title, description, publishDate, coverImage, coverImageAlt } = post.data;
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? SITE.url;
+const ogImage = coverImage ? `${siteUrl}${coverImage.src}` : undefined;
+
+const postUrl = `${siteUrl}/blog/${post.id}`;
+
+const jsonLd = [
+  {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` },
+    { '@type': 'ListItem', position: 3, name: title, item: postUrl },
+  ],
+  },
+  {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description,
+  url: postUrl,
+  datePublished: publishDate.toISOString(),
+  dateModified: (post.data.updatedDate ?? publishDate).toISOString(),
+  author: {
+    '@type': 'Person',
+    name: author.data.name,
+    ...(author.data.website ? { url: author.data.website } : {}),
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: SITE.name,
+    url: siteUrl,
+  },
+  ...(coverImage ? { image: `${siteUrl}${coverImage.src}` } : {}),
+  keywords: post.data.tags.join(', '),
+  articleSection: post.data.category,
+  timeRequired: `PT${readingTimeMin}M`,
+  },
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  ogImage={ogImage}
+  ogType="article"
+  publishDate={publishDate}
+  author={author.data.name}
+  jsonLd={jsonLd}
+>
+  <div class="min-h-screen flex flex-col" style="background: var(--color-bg);">
+    <Navbar />
+    <main class="flex-1">
+      <!-- Post header -->
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <PostMeta post={post} author={author} readingTimeMin={readingTimeMin} />
+
+        <h1 class="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight" style="color: var(--color-text-primary);">
+          {title}
+        </h1>
+
+        <p class="mt-4 text-xl leading-relaxed" style="color: var(--color-text-secondary);">
+          {description}
+        </p>
+
+        {coverImage && (
+          <div class="mt-8 rounded-2xl overflow-hidden">
+            <img
+              src={coverImage.src}
+              alt={coverImageAlt ?? title}
+              width={coverImage.width}
+              height={coverImage.height}
+              class="w-full object-cover"
+              style="max-height: 480px;"
+            />
+          </div>
+        )}
+      </div>
+
+      <!-- Content + TOC -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="lg:grid lg:grid-cols-[1fr_280px] lg:gap-12">
+          <!-- Article body -->
+          <article class="prose prose-lg max-w-none dark:prose-invert">
+            <slot />
+          </article>
+
+          <!-- TOC sidebar -->
+          {headings.length > 2 && (
+            <aside class="hidden lg:block">
+              <TableOfContents headings={headings} />
+            </aside>
+          )}
+        </div>
+
+        <!-- Author card -->
+        <div class="mt-16 pt-12 border-t" style="border-color: var(--color-border);">
+          <AuthorCard author={author} />
+        </div>
+
+        <!-- Related posts -->
+        {relatedPosts.length > 0 && (
+          <div class="mt-16">
+            <RelatedPosts posts={relatedPosts} />
+          </div>
+        )}
+      </div>
+    </main>
+    <Footer />
+    <BackToTop />
+  </div>
+</BaseLayout>
